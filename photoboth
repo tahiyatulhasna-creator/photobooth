@@ -1,0 +1,172 @@
+<<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photobooth Polaroid</title>
+<style>
+body {
+  font-family: 'Comic Sans MS', cursive, sans-serif;
+  background: #ffe0f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  padding: 20px;
+}
+h1 {
+  color: #ff3366;
+  text-align: center;
+  margin-bottom: 20px;
+}
+#video {
+  width: 300px;
+  height: 300px;
+  border: 5px solid #ff6699;
+  border-radius: 15px;
+  object-fit: cover;
+  margin-bottom: 15px;
+  transform: scaleX(-1); /* mirror preview */
+}
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+  background: #ff6699;
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+  margin: 5px;
+}
+button:hover {
+  background: #ff3366;
+}
+.strip {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.strip-box {
+  width: 180px;
+  height: 220px;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  border: 3px solid #ff99cc;
+}
+.stickers {
+  text-align: center;
+  margin-top: 15px;
+}
+.sticker {
+  width: 50px;
+  cursor: pointer;
+  margin: 5px;
+  transition: transform 0.2s;
+}
+.sticker:hover {
+  transform: scale(1.2);
+}
+</style>
+</head>
+<body>
+<h1> Photobooth Polaroid </h1>
+
+<video id="video" autoplay></video>
+<div>
+  <button id="snap">📸 Ambil Foto</button>
+  <button id="save">💾 Simpan Photostrip</button>
+</div>
+
+<div class="strip">
+  <div class="strip-box"><canvas></canvas></div>
+  <div class="strip-box"><canvas></canvas></div>
+  <div class="strip-box"><canvas></canvas></div>
+</div>
+
+<div class="stickers">
+  <img src="stiker/kamera.png" class="sticker" alt="Stiker 1">
+  <img src="stiker/lily.png" class="sticker" alt="Stiker 2">
+</div>
+
+<script>
+const video = document.getElementById('video');
+const snap = document.getElementById('snap');
+const save = document.getElementById('save');
+const canvases = document.querySelectorAll('.strip-box canvas');
+let currentIndex = 0;
+let selectedStickers = [];
+
+// akses kamera
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => video.srcObject = stream)
+.catch(err => alert("Gagal mengakses kamera: " + err));
+
+// klik stiker
+document.querySelectorAll('.sticker').forEach(sticker=>{
+  sticker.addEventListener('click', ()=>{
+    selectedStickers.push(sticker.src);
+    alert("Stiker akan ditempel di foto berikutnya");
+  });
+});
+
+// ambil foto
+snap.addEventListener('click', () => {
+  if(currentIndex >= canvases.length){
+    alert("Sudah 3 foto diisi!");
+    return;
+  }
+  const canvas = canvases[currentIndex];
+  const boxWidth = 180;
+  const boxHeight = 220;
+  canvas.width = boxWidth;
+  canvas.height = boxHeight;
+  const ctx = canvas.getContext('2d');
+
+  // bingkai polaroid putih
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0,0,boxWidth,boxHeight);
+
+  // gambar foto
+  const photoHeight = boxHeight - 40; // sisakan bawah
+  ctx.drawImage(video, 0,0,video.videoWidth, video.videoHeight, 0,0, boxWidth, photoHeight);
+
+  // gambar stiker
+  selectedStickers.forEach(src=>{
+    const img = new Image();
+    img.src = src;
+    img.onload = ()=> ctx.drawImage(img,10,10,50,50);
+  });
+  selectedStickers = []; // reset stiker untuk foto berikutnya
+
+  currentIndex++;
+});
+
+// simpan jadi photostrip vertikal
+save.addEventListener('click', ()=>{
+  if(currentIndex < 1){
+    alert("Belum ada foto yang diambil!");
+    return;
+  }
+  const singleWidth = canvases[0].width;
+  const singleHeight = canvases[0].height;
+  const combinedCanvas = document.createElement('canvas');
+  combinedCanvas.width = singleWidth;
+  combinedCanvas.height = singleHeight * canvases.length;
+  const ctx = combinedCanvas.getContext('2d');
+
+  canvases.forEach((canvas,index)=>{
+    ctx.drawImage(canvas,0,index*singleHeight,singleWidth,singleHeight);
+  });
+
+  const link = document.createElement('a');
+  link.download="photostrip_polaroid.png";
+  link.href = combinedCanvas.toDataURL("image/png");
+  link.click();
+});
+</script>
+</body>
+</html>
