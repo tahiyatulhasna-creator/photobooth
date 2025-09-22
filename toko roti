@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>bakery shop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white">
+
+  <!-- Header -->
+  <header class="bg-white shadow sticky top-0 z-20">
+    <div class="max-w-6xl mx-auto flex items-center justify-between p-4">
+      <div class="flex items-center gap-2">
+  <img src="menu roti/logo.png" alt="Bakeryshop Logo" class="h-16 w-16 object-cover">
+      <h1 class="text-xl font-bold text-[#4B3621]">Bakeryshop</h1>
+      <input id="search" type="text" placeholder="Cari roti..." 
+       onkeyup="filterProducts()" 
+       class="px-3 py-2 border rounded-lg w-1/2"> 
+      <button id="cart-btn" class="flex items-center gap-1 bg-[#A0522D] text-white px-3 py-2 rounded-lg">
+        🛒 Keranjang (<span id="cart-count">0</span>)
+      </button>
+    </div>
+  </header>
+
+  <!-- Filter Kategori -->
+  <div class="max-w-6xl mx-auto px-4 mt-4 flex gap-3 overflow-x-auto">
+    <button class="px-4 py-2 rounded-full bg-[#A0522D] text-white">All varian</button>
+    <button class="px-4 py-2 rounded-full bg-white border">cake</button>
+    <button class="px-4 py-2 rounded-full bg-white border">Pastry</button>
+    <button class="px-4 py-2 rounded-full bg-white border">Roti</button>
+  </div>
+
+  <!-- Produk -->
+  <main id="product-list" 
+      class="max-w-6xl mx-auto px-4 mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+  </main>
+
+  <!-- Keranjang -->
+  <div class="max-w-6xl mx-auto px-4 mt-10 bg-white rounded-xl shadow p-4">
+    <h3 class="font-bold mb-3">Keranjang Belanja</h3>
+    <ul id="cart-items" class="space-y-2 text-sm text-gray-700"></ul>
+    <div class="mt-4 font-bold">Total: Rp <span id="cart-total">0</span></div>
+    <button onclick="checkout()" 
+            class="mt-4 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
+
+            <div class="mt-4">
+  <label for="customer-name" class="block font-semibold mb-1">Nama Pemesan:</label>
+  <input type="text" id="customer-name" placeholder="Masukkan nama Anda" 
+         class="px-3 py-2 border rounded-lg w-full">
+</div>
+
+      Checkout
+    </button>
+    <div id="checkout-summary" class="mt-4 hidden bg-green-50 p-3 rounded-lg border border-green-200"></div>
+  </div>
+  <div id="notification" 
+       class="fixed top-5 right-5 bg-green-500 text-white px-4 py-2 rounded-lg shadow hidden">
+    Pesanan berhasil dibuat!
+  </div>
+
+
+
+  <!-- Footer -->
+  <footer class="bg-white mt-12 border-t">
+    <div class="max-w-6xl mx-auto px-4 py-4 text-sm text-gray-600 flex justify-between">
+      <span>© 2025 bakeryshop</span>
+      <span>Jl. Mawar desa Penusupan Kec. Pangkah</span>
+    </div>
+  </footer>
+
+  <script>
+const products = [
+  { name: "Strawberrycheesecake", price: 20000, img: "menu roti/Strawberry Cheesecake.jpg" },
+  { name: "Croissant Mentega", price: 15000, img: "menu roti/croisant.jpg" },
+  { name: "Muffin", price: 10000, img: "menu roti/muffin.jpg" },
+  { name: "Brownies", price: 15000, img: "menu roti/brownies.jpg" },
+  { name: "Strawberry puff", price: 15000, img: "menu roti/strawberry puff.jpg" },
+  { name: "Kue tart", price: 60000, img: "menu roti/kue tart.jpg" },
+  { name: "Donut", price: 10000, img: "menu roti/donat.jpg" }
+];
+
+let cart = [];
+let total = 0;
+
+// Render produk ke halaman
+function renderProducts(list) {
+  const container = document.getElementById("product-list");
+  container.innerHTML = "";
+  list.forEach(p => {
+    container.innerHTML += `
+      <div class="bg-white rounded-xl shadow p-4 flex flex-col">
+        <img src="${p.img}" alt="${p.name}" class="h-40 w-full object-cover rounded">
+        <h2 class="mt-2 font-bold">${p.name}</h2>
+        <div class="mt-2 font-semibold">Rp ${p.price.toLocaleString("id-ID")}</div>
+        <button onclick="addToCart('${p.name}', ${p.price})" 
+                class="mt-auto bg-[#8B4513] text-white py-2 rounded-lg hover:bg-orange-600">
+          Tambah ke Keranjang
+        </button>
+      </div>
+    `;
+  });
+}
+
+renderProducts(products);
+
+function filterProducts() {
+  const query = document.getElementById("search").value.toLowerCase();
+  const filtered = products.filter(p => p.name.toLowerCase().includes(query));
+  renderProducts(filtered);
+}
+
+function addToCart(name, price) {
+  cart.push({ name, price });
+  total += price;
+  updateCart();
+}
+
+function removeFromCart(index) {
+  total -= cart[index].price;
+  cart.splice(index, 1);
+  updateCart();
+}
+
+function updateCart() {
+  const cartList = document.getElementById("cart-items");
+  cartList.innerHTML = "";
+
+  cart.forEach((item, index) => {
+    let li = document.createElement("li");
+    li.className = "flex justify-between items-center border-b pb-1";
+    li.innerHTML = `
+      <span>${item.name} - Rp ${item.price.toLocaleString("id-ID")}</span>
+      <button onclick="removeFromCart(${index})" class="text-red-500 text-xs">Hapus</button>
+    `;
+    cartList.appendChild(li);
+  });
+
+  document.getElementById("cart-total").textContent = total.toLocaleString("id-ID");
+  document.getElementById("cart-count").textContent = cart.length;
+}
+
+function checkout() {
+  const customerName = document.getElementById("customer-name").value.trim();
+
+  if (cart.length === 0) {
+    alert("Keranjang masih kosong!");
+    return;
+  }
+
+  if (customerName === "") {
+    alert("Silakan masukkan nama Anda!");
+    return;
+  }
+
+  // Buat ringkasan nota
+  let summary = `<p>Pesanan <span class="text-[#8B4513] font-bold">${customerName}</span>:</p><ul>`;
+  cart.forEach(item => {
+    summary += `<li>${item.name} - Rp ${item.price.toLocaleString("id-ID")}</li>`;
+  });
+  summary += `</ul><p>Total: Rp ${total.toLocaleString("id-ID")}</p>`;
+
+  // tampilkan ringkasan
+  const checkoutBox = document.getElementById("checkout-summary");
+  checkoutBox.classList.remove("hidden");
+  checkoutBox.innerHTML = summary;
+
+
+  // tampilkan notifikasi
+  showNotification(customerName);
+
+  // reset keranjang & input nama
+  cart = [];
+  total = 0;
+  updateCart();
+  document.getElementById("customer-name").value = "";
+}
+
+function showNotification(name) {
+  const notif = document.getElementById("notification");
+  notif.innerHTML = `Pesanan <span class="font-bold text-[#FFF8DC]">${name}</span> berhasil dibuat!`;
+  notif.classList.remove("hidden");
+  setTimeout(() => notif.classList.add("hidden"), 3000);
+}
+
+</script>
